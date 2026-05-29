@@ -1,0 +1,151 @@
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #eef3f8;
+  color: #172033;
+}
+
+.page {
+  min-height: 100vh;
+  padding: 30px;
+  display: flex;
+  justify-content: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 1150px;
+  background: white;
+  border-radius: 18px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.12);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+}
+
+.badge {
+  background: #0b4f8a;
+  color: white;
+  font-weight: bold;
+  padding: 18px;
+  border-radius: 14px;
+  font-size: 24px;
+}
+
+h1, h2 {
+  color: #0b4f8a;
+}
+
+.sub {
+  color: #5b6677;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(240px, 1fr));
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+label {
+  font-weight: bold;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+input, select, button {
+  padding: 13px;
+  font-size: 16px;
+  border: 1px solid #c7d1dd;
+  border-radius: 10px;
+}
+
+button {
+  background: #0b4f8a;
+  color: white;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:disabled {
+  opacity: .6;
+}
+
+.inline {
+  display: flex;
+  gap: 8px;
+}
+
+.inline input {
+  width: 100px;
+}
+
+.summary, .chatbox, .saved {
+  margin-top: 28px;
+  padding: 22px;
+  background: #f8fbff;
+  border: 1px solid #d7e6f6;
+  border-radius: 16px;
+}
+
+.big {
+  font-size: 46px;
+  font-weight: bold;
+  color: #0b4f8a;
+  margin: 14px 0;
+}
+
+.alert {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #fff4d8;
+  border: 1px solid #e2bd52;
+  font-weight: bold;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.savedItem {
+  padding: 12px;
+  border-bottom: 1px solid #d7e6f6;
+}
+
+@media (max-width: 750px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media print {
+  body {
+    background: white;
+  }
+  .page {
+    padding: 0;
+  }
+  .card {
+    box-shadow: none;
+    border-radius: 0;
+  }
+  .no-print,
+  .chatbox,
+  .actions,
+  .saved {
+    display: none !important;
+  }
+}
