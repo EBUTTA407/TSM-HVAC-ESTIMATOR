@@ -261,7 +261,7 @@ export default function App() {
     try {
       setSearchLoading(true);
 
-      const response = await fetch("http://localhost:8787/api/estimate-search", {
+      const response = await fetch("https://tsm-hvac-estimator-api.onrender.com/api/estimate-search", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ job, equipment, model, stories, access }),
@@ -546,12 +546,27 @@ export default function App() {
 
           {searchResults && (
             <div style={{ marginTop: "20px" }}>
+              <p><b>Pricing Confidence:</b> {searchResults.pricingConfidence || "N/A"}</p>
               <p><b>Parts Range:</b> ${searchResults.partsLow} - ${searchResults.partsHigh}</p>
               <p><b>Recommended Parts Cost:</b> ${searchResults.recommendedPartsCost}</p>
               <p><b>Labor Range:</b> {searchResults.laborLow} - {searchResults.laborHigh} hrs</p>
               <p><b>Recommended Labor:</b> {searchResults.recommendedLaborHours} hrs</p>
               <p><b>Crane Required:</b> {searchResults.craneRequired ? "YES" : "NO"}</p>
               <p><b>Reason:</b> {searchResults.craneReason}</p>
+
+              {searchResults.priceSources && searchResults.priceSources.length > 0 && (
+                <div className="sourcesBox">
+                  <h3>Live Price Sources Found</h3>
+                  {searchResults.priceSources.map((item, index) => (
+                    <div className="sourceItem" key={index}>
+                      <p><b>{item.part}</b></p>
+                      <p>{item.source}: ${Number(item.price).toFixed(2)}</p>
+                      <p><a href={item.url} target="_blank" rel="noreferrer">Open Source</a></p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <p><b>Notes:</b> {searchResults.notes}</p>
             </div>
           )}

@@ -8,9 +8,13 @@ dotenv.config();
 const app = express();
 app.use(cors());
 app.use(express.json());
-console.log("API KEY PREFIX:", process.env.OPENAI_API_KEY?.substring(0,15));
+
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
+});
+
+app.get("/", (req, res) => {
+  res.send("TSM HVAC Estimator API is running");
 });
 
 app.post("/api/estimate-search", async (req, res) => {
@@ -18,75 +22,90 @@ app.post("/api/estimate-search", async (req, res) => {
     const { job, equipment, model, stories, access } = req.body;
 
     const prompt = `
-You are an HVAC estimating assistant for Tri State Mechanical in Arizona.
+You are the Tri State Mechanical HVAC estimating search engine.
 
-Estimate this job:
-Scope: ${job}
-Equipment: ${equipment}
-Model: ${model || "Not provided"}
-Building height: ${stories}
-Roof access: ${access}
+YOU MUST SEARCH THE WEB for live/current pricing before answering.
 
-Return JSON only with:
+Goal:
+Find parts pricing from public websites and use the HIGHEST realistic parts price found.
+
+Job:
+- Scope: ${job}
+- Equipment: ${equipment}
+- Model: ${model || "Not provided"}
+- Building height: ${stories}
+- Roof access: ${access}
+
+Search instructions:
+- Search public web sources for the model number and repair part.
+- Look for OEM parts, aftermarket parts, supplier pages, replacement parts, motors, capacitors, blades, boards, pressure switches, thermostat wire, drain parts, etc.
+- Sources can include Grainger, SupplyHouse, RepairClinic, PartsTown, United Refrigeration, Johnstone public pages, HVACPartsShop, Amazon Business/public listings, eBay only if no better source, manufacturer parts pages, and other HVAC supplier pages.
+- If exact model-specific pricing is not found, search the repair type plus equipment type and use the highest realistic comparable price.
+- Do NOT invent that you searched if no prices are found.
+- If no real pricing is found, set pricingConfidence to "low" and explain.
+- Use highest realistic parts price found as recommendedPartsCost.
+- Include source URLs and prices found.
+- Labor must include building height/access difficulty.
+- 1 story is normal.
+- 2-5 stories add time.
+- 5+ stories requires crane/lift review.
+- If condenser fan motor or direct-drive motor, include capacitor note.
+- If condenser fan motor, include condenser fan blade review note.
+- If rust/age risk applies, mention blade may be seized to shaft.
+
+Return JSON only:
 {
   "partsLow": number,
   "partsHigh": number,
   "recommendedPartsCost": number,
+  "pricingConfidence": "high" | "medium" | "low",
+  "priceSources": [
+    {
+      "part": "string",
+      "price": number,
+      "source": "string",
+      "url": "string"
+    }
+  ],
   "laborLow": number,
   "laborHigh": number,
   "recommendedLaborHours": number,
-  "craneRequired": true/false,
+  "craneRequired": true,
   "craneReason": "string",
   "notes": "string"
 }
-
-Rules:
-- Use the highest realistic parts cost for recommendedPartsCost.
-- Labor should include access and building height.
-- 1 story is normal.
-- 2-5 stories may add labor and lift/crane review.
-- 5+ stories requires crane/lift review.
-- Be conservative for commercial HVAC pricing.
-- If the job involves a direct drive motor, always recommend adding a capacitor.
-- If the job involves a condenser fan motor, include a note asking if the condenser fan blade needs replacement.
-- If the unit is 3-5 years old, warn that the condenser fan blade may be rusted/seized to the motor shaft.
-- If the motor is rusted, recommend adding a condenser fan blade because old blades often seize to the shaft and are difficult to remove without damage.
-- Include capacitor and blade notes inside "notes".
 `;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.2,
+    const response = await openai.responses.create({
+      model: "gpt-5.5",
+      tools: [{ type: "web_search" }],
+      input: prompt,
     });
 
-    const text = completion.choices[0].message.content;
+    let text = response.output_text || "";
 
-console.log("RAW RESPONSE:");
-console.log(text);
+    console.log("RAW WEB SEARCH RESPONSE:");
+    console.log(text);
 
-let jsonText = text.trim();
+    text = text
+      .replace(/^```json\s*/i, "")
+      .replace(/^```\s*/i, "")
+      .replace(/\s*```$/i, "")
+      .trim();
 
-if (jsonText.includes("```")) {
-  jsonText = jsonText
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/\s*```$/, "")
-    .trim();
-}
-
-const data = JSON.parse(jsonText);
+    const data = JSON.parse(text);
 
     res.json(data);
   } catch (err) {
-    console.error(err);
+    console.error("ESTIMATE SEARCH ERROR:", err);
+
     res.status(500).json({
-      error: "Failed to search pricing and labor",
+      error: "Failed to search live pricing and labor",
       details: err.message,
     });
   }
 });
 
-app.listen(process.env.PORT || 8787, () => {
-  console.log(`HVAC estimator backend running on port ${process.env.PORT || 8787}`);
+app.listen(process.env.PORT || 8787, "0.0.0.0", () => {
+  console.log(`TSM HVAC estimator backend running on port ${process.env.PORT || 8787}`);
 });
